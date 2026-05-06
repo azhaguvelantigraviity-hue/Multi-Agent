@@ -2,8 +2,17 @@ const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const mongoose = require('mongoose');
 const User = require('../models/User');
 const { protect } = require('../middleware/authMiddleware');
+
+const checkDB = (res) => {
+  if (mongoose.connection.readyState !== 1) {
+    res.status(503).json({ message: 'Database not connected. Please check MongoDB Atlas IP whitelist settings.' });
+    return false;
+  }
+  return true;
+};
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET || 'secret', { expiresIn: '30d' });
@@ -13,6 +22,7 @@ const generateToken = (id) => {
 // @desc    Register a new agent
 // @access  Public
 router.post('/register', async (req, res) => {
+  if (!checkDB(res)) return;
   const { name, email, password, mobile, pincode, address } = req.body;
   try {
     const userExists = await User.findOne({ email });
@@ -36,6 +46,7 @@ router.post('/register', async (req, res) => {
 // @desc    Auth user & get token
 // @access  Public
 router.post('/login', async (req, res) => {
+  if (!checkDB(res)) return;
   const { email, password } = req.body;
   try {
     const user = await User.findOne({ email });
