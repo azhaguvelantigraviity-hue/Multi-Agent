@@ -24,11 +24,14 @@ app.use('/api/agent', require('./routes/agentRoutes'));
 // Health check route (for Render to detect open port)
 app.get('/health', (req, res) => res.json({ status: 'ok', db: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected' }));
 
-// Serve Frontend static files in production
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../frontend/dist')));
-  app.get('/{*path}', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));
+// Serve Frontend static files (production)
+const distPath = path.join(__dirname, '../frontend/dist');
+const fs = require('fs');
+if (fs.existsSync(distPath)) {
+  app.use(express.static(distPath));
+  // Use app.use() as fallback — works with Express 4 AND Express 5
+  app.use((req, res) => {
+    res.sendFile(path.join(distPath, 'index.html'));
   });
 }
 
