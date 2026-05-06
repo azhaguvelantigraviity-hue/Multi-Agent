@@ -1,11 +1,20 @@
+// Prevent crashes FIRST - before anything else
+process.on('unhandledRejection', (reason) => {
+  console.error('Unhandled Rejection:', reason?.message || reason);
+});
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error.message);
+});
+
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const dotenv = require('dotenv');
 const bcrypt = require('bcryptjs');
 const path = require('path');
+const fs = require('fs');
 
-dotenv.config();
+// Load env vars
+require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -21,31 +30,37 @@ app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/subadmin', require('./routes/subAdminRoutes'));
 app.use('/api/agent', require('./routes/agentRoutes'));
 
-// Health check route (for Render to detect open port)
-app.get('/health', (req, res) => res.json({ status: 'ok', db: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected' }));
+// Health check
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', db: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected' });
+});
 
-// Serve Frontend static files (production)
+// Serve Frontend in production
 const distPath = path.join(__dirname, '../frontend/dist');
-const fs = require('fs');
 if (fs.existsSync(distPath)) {
   app.use(express.static(distPath));
-  // Use app.use() as fallback — works with Express 4 AND Express 5
   app.use((req, res) => {
     res.sendFile(path.join(distPath, 'index.html'));
   });
 }
 
-// START SERVER FIRST — so Render detects the open port immediately
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+// START SERVER — keeps process alive regardless of DB status
+const server = app.listen(PORT, () => {
+  console.log(`✅ Server running on port ${PORT}`);
 });
 
-// THEN connect to MongoDB
-mongoose.connect(MONGO_URI)
-  .then(async () => {
-    console.log('MongoDB Connected');
+server.on('error', (err) => {
+  console.error('Server error:', err.message);
+});
 
-    // Seed default admin if none exists
+// Connect to MongoDB (non-blocking)
+mongoose.set('strictQuery', false);
+mongoose.connect(MONGO_URI, {
+  serverSelectionTimeoutMS: 10000,
+  connectTimeoutMS: 10000,
+})
+  .then(async () => {
+    console.log('✅ MongoDB Connected');
     const User = require('./models/User');
     const adminExists = await User.findOne({ role: 'admin' });
     if (!adminExists) {
@@ -59,10 +74,10 @@ mongoose.connect(MONGO_URI)
         mobile: '0000000000',
         status: 'approved'
       });
-      console.log('Default Admin seeded: admin@system.com / admin123');
+      console.log('✅ Default Admin seeded: admin@system.com / admin123');
     }
   })
-  .catch((error) => {
-    console.error('MongoDB connection error:', error.message);
-    console.log('Server is running but database is not connected.');
+  .catch((err) => {
+    console.error('❌ MongoDB Error:', err.message);
+    console.log('⚠️  Server is live but DB is offline. Fix MongoDB Atlas IP whitelist.');
   });
