@@ -13,8 +13,8 @@ export default function AdminDashboard() {
     const fetchData = async () => {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
       const [statsRes, agentsRes] = await Promise.all([
-        axios.get('http://localhost:5000/api/admin/analytics', config),
-        axios.get('http://localhost:5000/api/admin/agents', config)
+        axios.get('/api/admin/analytics', config),
+        axios.get('/api/admin/agents', config)
       ]);
       setStats(statsRes.data);
       setAgents(agentsRes.data);
@@ -24,7 +24,7 @@ export default function AdminDashboard() {
 
   const handleStatusChange = async (id, status) => {
     const config = { headers: { Authorization: `Bearer ${user.token}` } };
-    await axios.put(`http://localhost:5000/api/admin/agents/${id}/status`, { status }, config);
+    await axios.put(`/api/admin/agents/${id}/status`, { status }, config);
     setAgents(agents.map(a => a._id === id ? { ...a, status } : a));
   };
 

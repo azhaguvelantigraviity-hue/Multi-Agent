@@ -15,7 +15,7 @@ export default function AgentDashboard() {
   useEffect(() => {
     const fetchShops = async () => {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      const { data } = await axios.get('http://localhost:5000/api/agent/shops', config);
+      const { data } = await axios.get('/api/agent/shops', config);
       setShops(data);
     };
     fetchShops();
@@ -27,7 +27,7 @@ export default function AgentDashboard() {
     e.preventDefault();
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      const { data } = await axios.post('http://localhost:5000/api/agent/shops', formData, config);
+      const { data } = await axios.post('/api/agent/shops', formData, config);
       setShops([...shops, data]);
       setShowForm(false);
       setFormData({ shopName: '', ownerName: '', mobile: '', address: '', pincode: '', category: '' });

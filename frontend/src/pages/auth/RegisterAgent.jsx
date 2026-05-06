@@ -17,7 +17,7 @@ export default function RegisterAgent() {
     setError('');
     setMessage('');
     try {
-      const { data } = await axios.post('http://localhost:5000/api/auth/register', formData);
+      const { data } = await axios.post('/api/auth/register', formData);
       setMessage(data.message);
       setTimeout(() => navigate('/login'), 3000);
     } catch (err) {

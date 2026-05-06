@@ -13,8 +13,8 @@ export default function SubAdminDashboard() {
     const fetchData = async () => {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
       const [agentsRes, shopsRes] = await Promise.all([
-        axios.get('http://localhost:5000/api/subadmin/agents', config),
-        axios.get('http://localhost:5000/api/subadmin/shops', config)
+        axios.get('/api/subadmin/agents', config),
+        axios.get('/api/subadmin/shops', config)
       ]);
       setAgents(agentsRes.data);
       setShops(shopsRes.data);

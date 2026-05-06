@@ -12,11 +12,21 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+const path = require('path');
+
 // Routes
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/subadmin', require('./routes/subAdminRoutes'));
 app.use('/api/agent', require('./routes/agentRoutes'));
+
+// Serve Frontend static files
+app.use(express.static(path.join(__dirname, '../frontend/dist')));
+
+// Catch-all to serve index.html for React Router
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));
+});
 
 // Database Connection
 const PORT = process.env.PORT || 5000;
